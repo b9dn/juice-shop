@@ -3,7 +3,6 @@ import { type ChallengeKey, ChallengeModel } from '../models/challenge'
 import { HintModel } from '../models/hint'
 import logger from './logger'
 import config from 'config'
-import sanitizeHtml from 'sanitize-html'
 import colors from 'colors/safe'
 import * as utils from './utils'
 import { calculateCheatScore, calculateFindItCheatScore, calculateFixItCheatScore } from './antiCheat'
@@ -12,6 +11,7 @@ import * as accuracy from './accuracy'
 import { type Server } from 'socket.io'
 import { AllHtmlEntities as Entities } from 'html-entities'
 import { challenges, notifications } from '../data/datacache'
+import { sanitizeSecure } from './insecurity'
 
 const entities = new Entities()
 
@@ -49,7 +49,7 @@ export const sendNotification = function (challenge: { difficulty?: number, key:
     const notification = {
       key: challenge.key,
       name: challenge.name,
-      challenge: challenge.name + ' (' + entities.decode(sanitizeHtml(challenge.description, { allowedTags: [], allowedAttributes: {} })) + ')',
+      challenge: challenge.name + ' (' + entities.decode(sanitizeSecure(challenge.description)) + ')',
       flag,
       hidden: !config.get('challenges.showSolvedNotifications'),
       isRestore

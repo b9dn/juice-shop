@@ -51,6 +51,20 @@ export const cutOffPoisonNullByte = (str: string) => {
   return str
 }
 
+export const isAdmin = (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const decodedToken = verify(utils.jwtFrom(req)) && decode(utils.jwtFrom(req))
+    const role = decodedToken?.data?.role
+    
+    if (role === roles.admin) {
+      return next()
+    } else {
+      return res.status(403).json({ message: 'Access denied: Admins only' })
+    }
+  } catch (err) {
+    return res.status(401).json({ message: 'Unauthorized: Invalid token' })
+  }
+}
 export const isAuthorized = () => expressJwt(({ secret: publicKey }) as any)
 export const denyAll = () => expressJwt({ secret: '' + Math.random() } as any)
 export const authorize = (user = {}) => jwt.sign(user, privateKey, { expiresIn: '6h', algorithm: 'RS256' })
