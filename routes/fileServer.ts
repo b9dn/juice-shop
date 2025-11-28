@@ -14,6 +14,11 @@ import * as challengeUtils from '../lib/challengeUtils'
 export function servePublicFiles () {
   return ({ params, query }: Request, res: Response, next: NextFunction) => {
     const file = params.file
+    if(file.includes('\0') || file.includes('%') || file.includes("/")) {
+      res.status(403)
+      next(new Error('Invalid file name'))
+      return
+    }
 
     if (!file.includes('/')) {
       verify(file, res, next)

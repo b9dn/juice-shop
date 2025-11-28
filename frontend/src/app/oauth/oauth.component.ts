@@ -25,6 +25,15 @@ export class OAuthComponent implements OnInit {
 
 
   ngOnInit (): void {
+    const params = this.parseRedirectUrlParams();
+    const returnedState = params.state;
+    const expected = sessionStorage.getItem('oauth_state');
+    if (!returnedState || returnedState !== expected) {
+      this.invalidateSession(new Error('Invalid state parameter'));
+      sessionStorage.removeItem('oauth_state');
+      this.ngZone.run(async () => await this.router.navigate(['/login']));
+      return;
+    }
     this.userService.oauthLogin(this.parseRedirectUrlParams().access_token).subscribe({
       next: (profile: any) => {
         const password = btoa(profile.email.split('').reverse().join(''))

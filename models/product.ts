@@ -39,26 +39,29 @@ const ProductModelInit = (sequelize: Sequelize) => {
         primaryKey: true,
         autoIncrement: true
       },
-      name: DataTypes.STRING,
+      name: {
+        type: DataTypes.STRING,
+        set (name: string) {
+            name = security.sanitizeSecure(name)
+            this.setDataValue('name', name)
+        }
+      },
       description: {
         type: DataTypes.STRING,
         set (description: string) {
-          if (utils.isChallengeEnabled(challenges.restfulXssChallenge)) {
-            challengeUtils.solveIf(challenges.restfulXssChallenge, () => {
-              return utils.contains(
-                description,
-                '<iframe src="javascript:alert(`xss`)">'
-              )
-            })
-          } else {
-            description = security.sanitizeSecure(description)
-          }
+          description = security.sanitizeSecure(description)
           this.setDataValue('description', description)
         }
       },
       price: DataTypes.DECIMAL,
       deluxePrice: DataTypes.DECIMAL,
-      image: DataTypes.STRING
+      image: {
+        type: DataTypes.STRING,
+        set (image: string) {
+            image = security.sanitizeSecure(image)
+            this.setDataValue('image', image)
+        }
+      },
     },
     {
       tableName: 'Products',

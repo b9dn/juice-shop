@@ -236,7 +236,27 @@ export function process () {
 
 async function getUserFromJwt (token: string): Promise<User | null> {
   return await new Promise((resolve) => {
-    jwt.verify(token, security.publicKey, (err: VerifyErrors | null, decoded: JwtPayload | string | undefined) => {
+    const parts = token.split('.');
+    if (parts.length !== 3) return resolve(null);
+
+    let header: any;
+    try {
+      const raw = parts[0].replace(/-/g, '+').replace(/_/g, '/');
+      const json = Buffer.from(raw, 'base64').toString('utf8');
+      header = JSON.parse(json);
+    } catch {
+      return resolve(null);
+    }
+
+    if (!header || header.alg !== 'RS256') {
+      return resolve(null);
+    }
+
+    jwt.verify(
+        token,
+        security.publicKey,
+        { algorithms: ['RS256'] },
+        (err: VerifyErrors | null, decoded: JwtPayload | string | undefined) => {
       if (err !== null || !decoded || isString(decoded)) {
         resolve(null)
       } else {

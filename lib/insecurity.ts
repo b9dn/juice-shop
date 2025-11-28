@@ -68,7 +68,28 @@ export const isAdmin = (req: Request, res: Response, next: NextFunction) => {
 export const isAuthorized = () => expressJwt(({ secret: publicKey }) as any)
 export const denyAll = () => expressJwt({ secret: '' + Math.random() } as any)
 export const authorize = (user = {}) => jwt.sign(user, privateKey, { expiresIn: '6h', algorithm: 'RS256' })
-export const verify = (token: string) => token ? (jws.verify as ((token: string, secret: string) => boolean))(token, publicKey) : false
+export const verify = (token: string): boolean => {
+  if (!token) return false
+
+  const parts = token.split('.')
+  if (parts.length !== 3) return false
+
+  try {
+    let raw = parts[0].replace(/-/g, '+').replace(/_/g, '/')
+    const pad = raw.length % 4
+    if (pad === 1) return false
+    if (pad !== 0) raw += '='.repeat(4 - pad)
+
+    const headerJson = Buffer.from(raw, 'base64').toString('utf8')
+    const header = JSON.parse(headerJson)
+
+    if (header == null || header.alg !== 'RS256') return false
+
+    return (jws.verify as (token: string, key: string | Buffer) => boolean)(token, publicKey)
+  } catch {
+    return false
+  }
+}
 export const decode = (token: string) => { return jws.decode(token)?.payload }
 
 export const sanitizeHtml = (html: string) => sanitizeHtmlLib(html)
@@ -149,7 +170,7 @@ export const redirectAllowlist = new Set([
 export const isRedirectAllowed = (url: string) => {
   let allowed = false
   for (const allowedUrl of redirectAllowlist) {
-    allowed = allowed || url.includes(allowedUrl) // vuln-code-snippet vuln-line redirectChallenge
+    allowed = allowed || url === allowedUrl
   }
   return allowed
 }

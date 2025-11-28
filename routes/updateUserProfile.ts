@@ -27,6 +27,11 @@ export function updateUserProfile () {
         return
       }
 
+      if(user?.username?.match(/#{(.*)}/) !== null) {
+        next(new Error("Invalid username"))
+        return
+      }
+
       challengeUtils.solveIf(challenges.csrfChallenge, () => {
         return ((req.headers.origin?.includes('://htmledit.squarefree.com')) ??
           (req.headers.referer?.includes('://htmledit.squarefree.com'))) &&
